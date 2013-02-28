@@ -1,4 +1,4 @@
-;;; indicators.el --- Display the buffer relative location of line in the fringe.
+;;; keyadvice.el --- Advice keybindings to run additional user defined code.
 
 ;; Copyright (C) 2013 Matus Goljer
 
@@ -47,9 +47,8 @@
   "Keymap used for advices.")
 
 (defvar keyadvice--map-alist
-  (list (cons 'keyadvice--emu-mode-map 'keyadvice-mode-map)))
-
-(defvar keyadvice-mode-version "keyadvice.el v0.0.1 2013/02/27")
+  (list (cons 'keyadvice--emu-mode-map 'keyadvice-mode-map))
+  "Used in `emulation-mode-map-alists' to override all the other minor modes.")
 
 (defvar keyadvice-advice-list nil
   "List of adviced bindings.")
@@ -58,12 +57,8 @@
   "keyadvice group."
   :group 'emacs)
 
-(defun keyadvice--raise-keyadvice-to-top ()
-  (let ((len (length (mapcar 'car minor-mode-map-alist))))
-    (dotimes (i len)
-      (raise-minor-mode-map-alist 'keyadvice-mode))))
-
 (defun keyadvice--subst-original (form)
+  "Substitute \"keyadvice-do-it\" with code to call the original funciton."
   (cond
    ((listp form)
     (mapcar 'keyadvice--subst-original form))
@@ -76,12 +71,22 @@
 
 ;;;###autoload
 (defmacro keyadvice-add-advice (binding &rest forms)
+  "Advice the command executed by BINDING.
+
+Replace the command bound to BINDING with function executing
+FORMS.  If FORMS contain special value \"keyadvice-do-it\", this
+will expand to code that will call the original function.
+Original function is whatever command would run if this binding
+weren't adviced.
+
+See also emacs function advices (`defadvice') if you don't quite
+understand why is this useful."
   (declare (indent 1))
   `(keyadvice--add-advice ,binding ',@forms))
 
 (defun keyadvice--add-advice (binding &rest forms)
   "Advice the routine executed by BINDING.
-The token keyadvice-do-it will expand to the original binding."
+The token \"keyadvice-do-it\" will expand to the original binding."
   (let* ((binding-name
           (replace-regexp-in-string
            " " "-" (format "%s" binding)))
@@ -123,3 +128,5 @@ The token keyadvice-do-it will expand to the original binding."
   (keyadvice-mode nil))
 
 (provide 'keyadvice)
+
+;;; keyadvice.el ends here
