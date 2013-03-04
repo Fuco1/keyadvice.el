@@ -47,7 +47,7 @@
   "Keymap used for advices.")
 
 (defvar keyadvice--map-alist
-  (list (cons 'keyadvice--emu-mode-map 'keyadvice-mode-map))
+  (list (cons 'keyadvice-mode-map keyadvice-mode-map))
   "Used in `emulation-mode-map-alists' to override all the other minor modes.")
 
 (defvar keyadvice-advice-list nil
@@ -63,7 +63,8 @@
    ((listp form)
     (mapcar 'keyadvice--subst-original form))
    (t (if (eq form 'keyadvice-do-it)
-          `(let ((keyadvice-mode nil))
+          `(let ((keyadvice-mode nil)
+                 (emulation-mode-map-alists (remove 'keyadvice--map-alist emulation-mode-map-alists)))
              (let ((com (key-binding ,binding)))
                (when com
                  (call-interactively com))))
@@ -104,7 +105,6 @@ The token \"keyadvice-do-it\" will expand to the original binding."
   :init-value nil
   :lighter " KA"
   :group 'keyadvice
-  :keymap keyadvice-mode-map
   (if keyadvice-mode
       (progn
         (add-to-ordered-list 'emulation-mode-map-alists 'keyadvice--map-alist 1))
